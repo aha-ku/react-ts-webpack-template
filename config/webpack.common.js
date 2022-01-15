@@ -2,15 +2,34 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const ProgressBarWebpackPlugin = require('progress-bar-webpack-plugin');
 const { appDist, appSrc, resolveApp } = require('./paths')
+const isDev = process.env.NODE_ENV === 'development';
+function getCssLoaders() {
+    const loaders = [
+        isDev ? 'style-loader' : MiniCssExtractPlugin.loader,
+        'css-loader',
+    ]
+    if (!isDev) {
+        loaders.push({
+            loader: "postcss-loader",
+            options: {
+                postcssOptions: {
+                    plugins: [
+                        "postcss-preset-env"
+                    ]
+                }
+            }
+        })
+    }
+    return loaders;
+}
 module.exports = {
     entry: './src/index.tsx',
     output: {
-        filename: "[name].[contenthash:8].bundler.js",
+        filename: "js/[name].[contenthash:8].bundler.js",
         path: appDist,
         // 编译前清除目录
         clean: true
     },
-    devtool: "source-map",
     resolve: {
         extensions: ['.tsx', '.jsx', '.js', '.ts',],
         alias: {
@@ -21,7 +40,9 @@ module.exports = {
         new HtmlWebpackPlugin({
             template: resolveApp('public/index.html')
         }),
-        new MiniCssExtractPlugin(),
+        new MiniCssExtractPlugin({
+            filename: "css/[name].[contenthash:8].css"
+        }),
         new ProgressBarWebpackPlugin()
     ],
     module: {
@@ -30,50 +51,32 @@ module.exports = {
                 test: /\.css$/,
                 include: appSrc,
                 use: [
-                    MiniCssExtractPlugin.loader,
-                    // 'style-loader',
-                    'css-loader',
-                    {
-                        loader: "postcss-loader",
-                        options: {
-                            postcssOptions: {
-                                plugins: [
-                                    "postcss-preset-env"
-                                ]
-                            }
-                        }
-                    }
+                    ...getCssLoaders()
                 ]
             },
             {
                 test: /\.(scss|sass)$/,
                 include: appSrc,
                 use: [
-                    MiniCssExtractPlugin.loader,
-                    // 'style-loader',
-                    'css-loader',
-                    {
-                        loader: "postcss-loader",
-                        options: {
-                            postcssOptions: {
-                                plugins: [
-                                    "postcss-preset-env"
-                                ]
-                            }
-                        }
-                    },
+                    ...getCssLoaders(),
                     "sass-loader"
                 ]
             },
             {
                 test: /\.(jpg|png|gif|svg|jpeg)$/,
                 include: [appSrc],
-                type: 'asset/resource'
+                type: 'asset/resource',
+                generator: {
+                    filename: "images/[hash][ext][query]"
+                }
             },
             {
                 test: /\.(woff|woff2|eot|ttf|otf)$/,
                 include: [appSrc],
-                type: 'asset/resource'
+                type: 'asset/resource',
+                generator: {
+                    filename: "fonts/[hash][ext][query]"
+                }
             },
             {
                 test: /\.[jt]sx?$/,

@@ -10,6 +10,9 @@ module.exports = merge(webpackCommon, {
             new ESBuildMinifyPlugin({
                 target: "es2015"
             })
-        ]
+        ],
+        splitChunks: {
+            chunks: "all"
+        }
     }
 })
